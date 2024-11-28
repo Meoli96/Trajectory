@@ -14,8 +14,6 @@ dEM = 384400
 # "Relative" gravitational parameter
 mu = mM/(mE+mM)
 
-
-
 # L1
 xL1 = 0.8369
 yL1 = 0 
@@ -25,6 +23,8 @@ XL1 = [xL1, yL1]
 xL2 = 1.1556
 yL2 = 0
 XL2 = [xL2, yL2]
+
+
 
 alpha0 = 50/384400 # initial guess for alpha
 
