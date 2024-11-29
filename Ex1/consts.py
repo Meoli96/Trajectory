@@ -5,6 +5,7 @@ mE = 5.972e24
 # Moon mass (kg)
 mM = 7.342e22
 
+
 # Gravitational constant (m^3/kg/s^2)
 G = 6.67430e-11
 
@@ -24,9 +25,9 @@ xL2 = 1.1556
 yL2 = 0
 XL2 = [xL2, yL2]
 
-
-
-alpha0 = 50/384400 # initial guess for alpha
+# eps is used to avoid numerical ghost values interfering with some of the
+# computations. So if x < eps, x = 0 is considered
+eps = 10**-14
 
 # This Jacobi range tells me conditions for the initial position (dictated by alpha0) via the potential function
 # and the initial velocity (v0, u0 is always 0 - perpendicular to the x-axis) for the shooting method
