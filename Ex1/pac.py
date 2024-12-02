@@ -14,7 +14,13 @@ def PAC(Yd0: np.ndarray, DF:np.ndarray, mu: float):
     # Yd0: Initial design vector, solution of the nonlinear Lyapunov orbit (3x1)
     # DF: Jacobian of the nonlinear Lyapunov orbit (2x3)
     # mu: Mass ratio
-    
+    # Output:
+    # Yd_k: Design vector of the new orbit (3x1)
+    # DF: Jacobian of the new orbit (2x3)
+    # F_X: Constraint vector of the new orbit (2x1)
+    # Note: The exercise suggests to store the tangent of the curve tau
+    #       and the step size delta_s to perform the bifurcation analysis
+
     delta_s = 1e-3
     tau = spli.null_space(DF) # Tangent of the curve
 
@@ -24,12 +30,12 @@ def PAC(Yd0: np.ndarray, DF:np.ndarray, mu: float):
     G = np.ones((3,1))
     DG = np.zeros((3,3))
 
-    while np.linalg.norm(G) > 1e-12:
+    while np.linalg.norm(G) > eps:
         DX, DF, F_X = shooting(Yd_k, mu)
         # G_X = [F_X(2x1), tan_tau'*(Y_guess_new - Y_guess_old)-delta_s(1x1)]
         G[0:2] = F_X
         G[2] = tau.T@(Yd_k - Yd0) - delta_s
-        if np.linalg.norm(G) > 1e-12:
+        if np.linalg.norm(G) > eps:
             # Correct the design vector
             # DG = [DF, tau.T]
             DG[0:2, :] = DF
