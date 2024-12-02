@@ -65,7 +65,7 @@ def A(r: np.ndarray, mu: float) -> np.ndarray:
     return A
 
 
-def lin_lyapunov_orbit(XL: np.ndarray, om_ly: float, alpha0: float, V: np.ndarray, tpoints = 100) -> np.ndarray:
+def lin_lyapunov_orbit(XL: np.ndarray, om_ly: float, alpha0: float, V: np.ndarray, tpoints = 1000) -> np.ndarray:
     # This function computes the linearized Lyapunov orbit given the 
     # Lyapunov frequency om_ly, the initial guess for alpha alpha0
     # and the eigenvector V of the Jacobian A(xL) corresponding to the
@@ -84,7 +84,7 @@ def lin_lyapunov_orbit(XL: np.ndarray, om_ly: float, alpha0: float, V: np.ndarra
         dim = len(XL)
     elif len(XL) == 2 and len(V) == 4:
         # Fall back to the full state vector if XL is only the position
-        XL = np.concatenate((XL, np.zeros(2)))
+        XL = np.concatenate((XL, np.zeros(2))).reshape(4, 1)
         dim = 4
     elif len(XL) == 4 and len(V) == 2:
         # Raise an error if the state vector is full and the eigenvector is only the position
@@ -100,7 +100,7 @@ def lin_lyapunov_orbit(XL: np.ndarray, om_ly: float, alpha0: float, V: np.ndarra
     # Allocate the state vector
     X = np.zeros((dim, tpoints)) 
     for i, t in enumerate(time_span):
-        X[:, i] = XL + alpha0*(np.cos(om_ly*t)*V.real - np.sin(om_ly*t)*V.imag)
+        X[:, i:i+1] = XL + alpha0*(np.cos(om_ly*t)*V.real - np.sin(om_ly*t)*V.imag)
     return X
 
 
@@ -119,7 +119,8 @@ def shooting(Y_guess, mu):
     tau0 = 0
     # Final time
     tau1 = 1/2
-
+    # Flatten Y_guess or numpy goes mad
+    Y_guess = Y_guess.flatten()
     x0 = Y_guess[0]
     v0 = Y_guess[1]
     T = Y_guess[2]
@@ -134,7 +135,7 @@ def shooting(Y_guess, mu):
     # Unpack Yf = [x(T/2), y(T/2), u(T/2), v(T/2), PHI(T/2)]
     Yf = sol.y[:, -1]
     # F_X = [y(T/2), u(T/2)] - [0, 0](Yt)
-    F_X = Yf[1:3] # - Yt, but Yt = 0
+    F_X = Yf[1:3].reshape(2,1) # - Yt, but Yt = 0
     PHIf = Yf[4:].reshape(4, 4)
     
     f0 = f(tau0, Y0, T, mu)[:4] # Initial state_dot vector
@@ -163,7 +164,7 @@ def nonlin_lyapunov_orbit(XL: np.ndarray, mu: float, alpha0, tpoints = 1000) -> 
     # alpha0 is the amplitude of the orbit for the linearized case
     # tpoints is the number of points to evaluate the orbit
     
-    # Returns the initial condition of the orbit to be integrated X0, the Jacobi
+    # Returns the initial condition of the design vector orbit to be integrated X0, the Jacobi
     # constat C associated and DF and F_X from the shooting method
 
 
@@ -184,7 +185,7 @@ def nonlin_lyapunov_orbit(XL: np.ndarray, mu: float, alpha0, tpoints = 1000) -> 
 
 
     # Compute the Jacobian A at the Lagrangian point
-    A_ = A(XL[:2], mu)
+    A_ = A(XL[:2].flatten(), mu)
     # Compute the eigenvalues and eigenvectors
     eigvals, eigvecs = sp.linalg.eig(A_)
     # Find the complex eigenvalue with positive imaginary part
@@ -199,12 +200,15 @@ def nonlin_lyapunov_orbit(XL: np.ndarray, mu: float, alpha0, tpoints = 1000) -> 
     # Compute the linearized Lyapunov orbit
     X_lyap = lin_lyapunov_orbit(XL, om_ly, alpha0, Ec1, tpoints)
     
-    # Compute the crossing points on the x-axis and take the positive one
-    idx_cross = [idx for idx in range(tpoints-1) if X_lyap[1, idx] * X_lyap[1,idx+1] < 0 and X_lyap[0, idx] > 0]
+    # Compute the crossing points on the x-axis and take the one at the right of the Lagrangian point
+    idx_cross = [idx for idx in range(tpoints-1) if X_lyap[1, idx] * X_lyap[1,idx+1] < 0 and X_lyap[0, idx] - XL[0] > 0]
     X0 = X_lyap[:, idx_cross]
 
     # Build the initial guess for the shooting method and the final condition
-    Y_guess = [X0[0], X0[3], 2*np.pi/om_ly]  # [x0, v0, T]
+    Y_guess = np.zeros((3, 1))
+    Y_guess[0] = X0[0] # x0
+    Y_guess[1] = X0[3] # v0
+    Y_guess[2] = 2*np.pi/om_ly[0] # Initial guess for the period
     # Yt = [0,0] # [y(T/2), u(T/2)] = 0 is the constraint
     F_X = 1  # Initialize the constraint vector
 
@@ -212,16 +216,32 @@ def nonlin_lyapunov_orbit(XL: np.ndarray, mu: float, alpha0, tpoints = 1000) -> 
     while sp.linalg.norm(F_X) > eps:
         dX, DF, F_X = shooting(Y_guess, mu)
         Y_guess += dX
-    # Return the initial condition of the orbit to be integrated, DF and F_X
-    C_nl = Jacobi(Y_guess[:2], Y_guess[2:], mu)
-    print(f"Shooting converged at {Y_guess} that satisfies the constraint with accuracy {F_X}")
-    print(f"Jacobi constant: {C_nl}") 
+    # Return the design vector of the orbit to be integrated, DF and F_X
+    print(f"Shooting converged at: \n {Y_guess} \n that satisfies the constraint with accuracy: \n {F_X}")
 
-    return Y_guess, C_nl, DF, F_X
+    return Y_guess, DF, F_X
 
    
 
 
+def compute_orbit_Yd(Yd:np.ndarray, mu: float, n_points = 1000):
+    # This function computes the full orbit from the design vector
+    # Yd = [x0, v0, T]
+    # mu is the mass ratio
+    # Returns the state vector X and the state transition matrix PHI
+    Yd = Yd.flatten()
+    Y0 = [Yd[0], 0, 0, Yd[1]]
+    Y0 = np.concatenate((Y0, np.eye(4).flatten()))
+    T = Yd[2]
+
+    tau_span = np.linspace(0, 1, n_points)
+    sol = solve_ivp(f, [0, 1], Y0, args=(T, mu), method='LSODA', t_eval=tau_span)
+
+    # Unpack solution and return
+    X = sol.y[:4, :] # State
+    PHI = sol.y[4:, :] # State transition matrix
+
+    return X, PHI
 
 
 

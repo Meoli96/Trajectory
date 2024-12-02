@@ -18,12 +18,12 @@ mu = mM/(mE+mM)
 # L1
 xL1 = 0.8369
 yL1 = 0 
-XL1 = [xL1, yL1]
+XL1 = np.array([xL1, yL1,0,0]).reshape(4,1)
 
 # L2
 xL2 = 1.1556
 yL2 = 0
-XL2 = [xL2, yL2]
+XL2 = np.array([xL2, yL2,0,0]).reshape(4,1)
 
 # eps is used to avoid numerical ghost values interfering with some of the
 # computations. So if x < eps, x = 0 is considered
