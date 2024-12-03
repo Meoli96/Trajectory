@@ -48,7 +48,11 @@ C_range = [3.1370, 3.1493] # Jacobi constant range for L1 and L2, at least two/t
 # Apply the linearized Lyapunov orbit as the initial guess
 # Shooting method to find orbit with two crossing points perpendicular to the x-axis
 # Once one of the orbit is found, apply PAC to find the other ones of the same family
-# Plot 
-# Enjoy!
+
+### Bisection method
+# Starting from a nonlinear lyapunov orbit, we need to find
+# orbits in the C_range provide and compute them pairwise (L1 and L2)
+
+
 
 

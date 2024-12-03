@@ -1,5 +1,5 @@
 import numpy as np
-import scipy as sp
+import scipy.linalg as spli
 from scipy.integrate import solve_ivp
 # This files contains formulae related to the problem at hand.
 # In particular:
@@ -49,9 +49,9 @@ def A(r: np.ndarray, mu: float) -> np.ndarray:
     #               0  0  0  1
     # df/dY = A = Uxx Uxy 0  2
     #             Uyx Uyy -2 0
-    x, y = r
+  
 
-    d2U_ = d2U(np.array([x, y]), mu)
+    d2U_ = d2U(r, mu)
     Uxx = d2U_[0, 0]
     Uxy = d2U_[0, 1]
     Uyy = d2U_[1, 1]
@@ -153,7 +153,7 @@ def shooting(Y_guess, mu):
     DF[1,2] = 0.5*PHIf[2, :]@f0
 
     # Compute the correction
-    dX = -sp.linalg.pinv(DF)@F_X
+    dX = -spli.pinv(DF)@F_X
     
     return dX, DF, F_X    
    
@@ -187,7 +187,7 @@ def nonlin_lyapunov_orbit(XL: np.ndarray, mu: float, alpha0, tpoints = 1000) -> 
     # Compute the Jacobian A at the Lagrangian point
     A_ = A(XL[:2].flatten(), mu)
     # Compute the eigenvalues and eigenvectors
-    eigvals, eigvecs = sp.linalg.eig(A_)
+    eigvals, eigvecs = spli.eig(A_)
     # Find the complex eigenvalue with positive imaginary part
     
     Ec1_idx = [idx for idx in range(len(eigvals)) if isinstance(eigvals[idx], complex) 
@@ -213,7 +213,7 @@ def nonlin_lyapunov_orbit(XL: np.ndarray, mu: float, alpha0, tpoints = 1000) -> 
     F_X = 1  # Initialize the constraint vector
 
     # Shooting loop
-    while sp.linalg.norm(F_X) > eps:
+    while spli.norm(F_X) > eps:
         dX, DF, F_X = shooting(Y_guess, mu)
         Y_guess += dX
     # Return the design vector of the orbit to be integrated, DF and F_X
