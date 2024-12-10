@@ -27,7 +27,8 @@ XL2 = np.array([xL2, yL2,0,0]).reshape(4,1)
 
 # eps is used to avoid numerical ghost values interfering with some of the
 # computations. So if x < eps, x = 0 is considered
-eps = 10**-14
+eps = 1e-14
+tol = 1e-12
 
 # This Jacobi range tells me conditions for the initial position (dictated by alpha0) via the potential function
 # and the initial velocity (v0, u0 is always 0 - perpendicular to the x-axis) for the shooting method
