@@ -44,15 +44,19 @@ class LyapOrbit:
 
         self.X, self.PHI = None, None
     
-    def compute_orbit(self, Dtau = [0, 1], n_points = 1000 ):
+    def propagate(self, Tf = 0, n_points = 1000 ):
         Yd = self.Yd.flatten()
         
         X0 = np.array([Yd[0], 0, 0, Yd[1]])
         # Add the state transition matrix
         X0 = np.concatenate((X0, np.eye(4).flatten()))
+        
+        if Tf == 0:
+            Tf = Yd[2] # T
+        tau_span = np.linspace(0, Tf, n_points)
+
         T = Yd[2]
-        tau_span = np.linspace(Dtau[0], Dtau[1], n_points)
-        sol = solve_ivp(fdyn, [Dtau[0], Dtau[1]], X0, args=(T, mu), method='LSODA', t_eval=tau_span, rtol = 3*10**-14, atol = 10**-14)
+        sol = solve_ivp(fdyn, [0, Tf], X0, args=(T, mu), method='LSODA', t_eval=tau_span, rtol = 3*10**-14, atol = 10**-14)
 
         # Unpack solution and return
         X = sol.y[:4, :] # State
@@ -62,11 +66,26 @@ class LyapOrbit:
     
     def plot(self, plt_args = []):
         if self.X is None:
-            self.X, self.PHI = self.compute_orbit()
+            self.X, self.PHI = self.propagate()
         import matplotlib.pyplot as plt
         plt.plot(self.X[0, :], self.X[1, :], plt_args)
-        
+
+    def save(self, file):
+        np.savez(file, Yd = self.Yd, tau = self.tau, ds = self.ds, mu = self.mu)
     
+
+def load_orbit(file):
+    data = np.load(file)
+    Yd = data['Yd']
+    tau = data['tau']
+    ds = data['ds']
+    mu = data['mu']
+    return LyapOrbit(Yd, tau, mu, ds)
+    
+ 
+# Write a function to save an orbit to an open file with the npz extension
+# without overwriting the file
+
 
 
     
@@ -189,7 +208,7 @@ class Family:
         cmap = plt.get_cmap('jet')
 
         for orbit in self.family:
-            X, PHI = orbit.compute_orbit()
+            X, PHI = orbit.propagate()
             C = orbit.C
             color = cmap(norm(C))
             plt.plot(X[0, :], X[1, :], color=color)

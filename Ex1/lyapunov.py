@@ -513,7 +513,9 @@ def find_isoC(orbit_ref: LyapOrbit, family_targ: Family, Ctol = 1e-4, verbose = 
                         print(f"Found orbit with C = {C_target}, err = {abs(C_guess - C_target)}")
                     break
                 else:
-                   
+                    if verbose:
+                        print(f"Orbit not in the C tolerance. C = {C_guess}, err = {abs(C_guess - C_target)}, ds = {ds}, G = {spli.norm(G_guess)}")
+
                     if C_guess < C_target:
                         if np.sign(ds) > 0:
                             ds = -ds
@@ -526,8 +528,6 @@ def find_isoC(orbit_ref: LyapOrbit, family_targ: Family, Ctol = 1e-4, verbose = 
                         ds *= 1.1
                     Yd0 = Ydk
                     tau0 = tauk
-                    if verbose:
-                        print(f"Orbit not in the C tolerance. C = {C_guess}, err = {abs(C_guess - C_target)}, ds = {ds}, G = {spli.norm(G_guess)}")
             else:
                 if verbose:
                     print(f"Orbit not in the G tolerance. G = {spli.norm(G_guess)}")
