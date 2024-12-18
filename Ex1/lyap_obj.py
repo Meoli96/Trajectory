@@ -2,7 +2,7 @@ import numpy as np
 import scipy.linalg as spli
 from scipy.integrate import solve_ivp
 
-from consts import mu
+
 from lyapunov import Jacobi, fdyn, nonlin_lyapunov_orbit
 from pac import PAC
 
@@ -48,19 +48,20 @@ class LyapOrbit:
         Yd = self.Yd.flatten()
         
         X0 = np.array([Yd[0], 0, 0, Yd[1]])
+        T = Yd[2]
         # Add the state transition matrix
         X0 = np.concatenate((X0, np.eye(4).flatten()))
         
         if Tf == 0:
-            Tf = Yd[2] # T
+            Tf = T # T
         tau_span = np.linspace(0, Tf, n_points)
-
-        T = Yd[2]
+        mu = self.mu
+    
         sol = solve_ivp(fdyn, [0, Tf], X0, args=(T, mu), method='LSODA', t_eval=tau_span, rtol = 3*10**-14, atol = 10**-14)
 
         # Unpack solution and return
         X = sol.y[:4, :] # State
-        PHI = sol.y[4:, :] # State transition matrix
+        PHI = sol.y[4:, :].reshape(4,4, -1)
         
         return X, PHI
     
@@ -80,7 +81,7 @@ def load_orbit(file):
     tau = data['tau']
     ds = data['ds']
     mu = data['mu']
-    return LyapOrbit(Yd, tau, mu, ds)
+    return LyapOrbit(Yd, tau, ds, mu)
     
  
 # Write a function to save an orbit to an open file with the npz extension

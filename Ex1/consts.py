@@ -13,7 +13,7 @@ G = 6.67430e-11
 dEM = 384400
 
 # "Relative" gravitational parameter
-mu = mM/(mE+mM)
+muEM = mM/(mE+mM)
 
 # L1
 xL1 = 0.8369
