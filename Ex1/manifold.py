@@ -254,8 +254,12 @@ class Manifold:
         # Remove all the None values
         cut_s = [x for x in cut_s if x is not None]
         cut_u = [x for x in cut_u if x is not None]
+        sur_s = [x for x in sur_s if x is not None]
+        sur_u = [x for x in sur_u if x is not None]
 
         return cut_s, sur_s, cut_u, sur_u
+    
+  
     
     
     def plot_ZVC(self, ax = None, **kwargs):
