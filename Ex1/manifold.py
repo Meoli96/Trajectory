@@ -171,7 +171,7 @@ class Manifold:
             self.sols_u.append(Xup)
             self.sols_u.append(Xum)
 
-            print(f"\rCurve {i+1}/{n_curves} computed")
+            print(f"Curve {i+1}/{n_curves} computed", end = '\r')
         # End of loop
 
         
@@ -187,9 +187,11 @@ class Manifold:
         # that takes a 4x1 vector and returns a scalar
         # If the surface is hit, the function returns 1, otherwise 0
         
-        cut_s = [None] * len(self.sols_s)
-        cut_u = [None] * len(self.sols_u)
-        sur_s = [None] * len(self.sols_s) # Values of the state at surface hit
+        # cuts
+        cut_s =  [None] * len(self.sols_s) 
+        cut_u =  [None] * len(self.sols_s) 
+        # Values of the state at surface hit
+        sur_s = [None] * len(self.sols_s) 
         sur_u = [None] * len(self.sols_u)
         s_b = False # False if the surface is not hit, True otherwise
         u_b = False
@@ -233,6 +235,12 @@ class Manifold:
         cut_u = [x for x in cut_u if x is not None]
         sur_s = [x for x in sur_s if x is not None]
         sur_u = [x for x in sur_u if x is not None]
+
+        # Transform the list to numpy arrays
+
+        sur_s = np.array(sur_s)
+        sur_u = np.array(sur_u)
+        
 
         return cut_s, sur_s, cut_u, sur_u
     

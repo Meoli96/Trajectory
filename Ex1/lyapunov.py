@@ -381,8 +381,9 @@ def compute_orbit_Yd(Yd:np.ndarray, mu: float, n_points = 1000):
 
 
 
-from pac import PAC
-from lyap_obj import LyapOrbit, Family
+from pac import PAC,LyapOrbit, Family
+
+
     
 def find_Crange(fam: Family,  n_orbits, Crange = [2.95, 3.05], Ctol = 1e-4, verbose = False):
         # Finds the 
@@ -522,7 +523,7 @@ def find_isoC(orbit_ref: LyapOrbit, family_targ: Family, Ctol = 1e-4, verbose = 
                     # increases as the distance to the LP decreases
 
                     # So, if we're below the target C, we should move in the direction of the LP, 
-                    # and thus a negative displacement where x0>xf and viceversa
+                    # and thus a negative ds and vice versa
 
                     if C_guess < C_target:
                         if np.sign(ds) > 0:
@@ -532,8 +533,6 @@ def find_isoC(orbit_ref: LyapOrbit, family_targ: Family, Ctol = 1e-4, verbose = 
                         if np.sign(ds) < 0:
                             ds = -ds
                         ds /= 1.1
-                    else:
-                        ds *= 1.1
                     Yd0 = Ydk
                     tau0 = tauk
             else:
@@ -631,6 +630,10 @@ def find_isoC_bisection(orbit_ref: LyapOrbit, family_targ: Family, Ctol = 1e-4, 
                     print(f"Orbit not in the G tolerance. G = {spli.norm(G_guess)}")
                 ds_guess /= 1.1
 
+        
 
+        new_orbit = LyapOrbit(Ydk, tauk, family_targ.mu, ds_guess)
+        return new_orbit	
+    
 
 
