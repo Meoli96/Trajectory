@@ -477,9 +477,10 @@ def find_isoC(orbit_ref: LyapOrbit, family_targ: Family, Ctol = 1e-4, verbose = 
         # Maybe we are lucky
         if abs(orbit.C - C_target) < Ctol:
             ret_orbit = orbit
-            break
             if verbose:
                 print(f"Found orbit with C = {C_target}")
+            break
+            
 
     if ret_orbit is None:
         # We're not lucky, PAC our way into it
@@ -515,6 +516,13 @@ def find_isoC(orbit_ref: LyapOrbit, family_targ: Family, Ctol = 1e-4, verbose = 
                 else:
                     if verbose:
                         print(f"Orbit not in the C tolerance. C = {C_guess}, err = {abs(C_guess - C_target)}, ds = {ds}, G = {spli.norm(G_guess)}")
+                   
+                    # The strategy here is to move the ds in the direction of the target C,
+                    # having in mind that as long as we're around the LP, the Jacobi constant 
+                    # increases as the distance to the LP decreases
+
+                    # So, if we're below the target C, we should move in the direction of the LP, 
+                    # and thus a negative displacement where x0>xf and viceversa
 
                     if C_guess < C_target:
                         if np.sign(ds) > 0:
@@ -543,7 +551,85 @@ def find_isoC(orbit_ref: LyapOrbit, family_targ: Family, Ctol = 1e-4, verbose = 
 
         
 
+def find_isoC_bisection(orbit_ref: LyapOrbit, family_targ: Family, Ctol = 1e-4, verbose = False ):
+    # This function finds the orbits in the target family that have the same Jacobi constant as the reference orbit
+    # Input:
+    # orbit_ref: Reference orbit
+    # family_targ: Target family
+    # Ctol: Tolerance for the Jacobi constant
+    # Output:
+    # orbits_isoC: List of orbits in the target family with the same Jacobi constant as the reference orbit
+    if len(family_targ.family) == 0:
+        raise ValueError("The target family is empty")
+    
+    C_target = orbit_ref.C
+    if verbose:
+        print(f"Finding orbits with C = {C_target}")
+    ret_orbit = None
 
+    for orbit in family_targ.family:
+        # Maybe we are lucky
+        if abs(orbit.C - C_target) < Ctol:
+            ret_orbit = orbit
+            if verbose:
+                print(f"Found orbit with C = {C_target}")
+            break
+            
+
+    if ret_orbit is None:
+        # We're not lucky, PAC our way into it
+
+        # Find the closest orbits from the target family to C_guess
+        for i in range(len(family_targ.family)):
+            C_k = family_targ.family[i].C
+            C_kp = family_targ.family[i-1].C
+            ## We're assuming the family is sorted by Jacobi constant
+            if C_k < C_target and C_kp > C_target:
+                l_idx = i-1
+                r_idx = i
+                break
+
+        l_orb = family_targ.family[l_idx]
+        r_orb = family_targ.family[r_idx]
+
+        # Kickstart the bisection
+        G_guess = 1
+        C_guess = 0
+
+        ds_a = 0
+        ds_b = r_orb.ds
+        ds_guess = ds_b/2
+
+        Yd0 = l_orb.Yd
+        tau0 = l_orb.tau
+
+        while spli.norm(G_guess) > 1e-12  or abs(C_guess - C_target) > Ctol:
+            # PAC
+            Ydk, tauk, G_guess = PAC(Yd0, tau0, ds_guess, family_targ.mu)
+            # Compute Jacobi constant
+            C_guess = Jacobi(np.array([Ydk[0][0], 0]), np.array([0, Ydk[1][0]]), family_targ.mu)
+            if spli.norm(G_guess) < 1e-12:
+                if abs(C_guess - C_target) < Ctol:
+                    if verbose:
+                        print(f"Found orbit with C = {C_target}, err = {abs(C_guess - C_target)}")
+                    break
+                else:
+                    if verbose:
+                        print(f"Orbit not in the C tolerance. C = {C_guess}, err = {abs(C_guess - C_target)}, ds = {ds_guess}, G = {spli.norm(G_guess)}")
+                    if C_guess < C_target:
+                        ds_b = ds_guess
+                    
+                    elif C_guess > C_target:
+                        ds_a = ds_guess    
+                 
+                    # Update the guess
+                    ds_guess = (ds_a + ds_b)/2
+                    if verbose:
+                        print(f"New ds_guess = {ds_guess}")
+            else:
+                if verbose:
+                    print(f"Orbit not in the G tolerance. G = {spli.norm(G_guess)}")
+                ds_guess /= 1.1
 
 
 

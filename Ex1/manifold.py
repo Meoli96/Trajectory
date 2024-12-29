@@ -42,7 +42,7 @@ class Manifold:
 
 
 
-    def compute_manifold(self, n_curves, verbose = False, k = 1, terminal = True):
+    def compute_manifold(self, n_curves, verbose = False, k = 1):
          # Computes the stable and unstable manifolds of a given orbit
 
         # k: tau_f = k*T, where tau_f is the final time of the integration
@@ -135,48 +135,25 @@ class Manifold:
                 print(f"Initial conditions for unstable manifold: {X0up}")
 
 
-            # Stable (backwards)
-            if terminal:
-                # Terminal event set
+                
+       
+            # Stable (backward)
+            sol_sp = solve_ivp(fdyn, [0, -k*T], X0sp, 
+                                args = (T,mu), method='LSODA', 
+                                rtol=3e-12, atol=1e-12)
+            
+            sol_sm = solve_ivp(fdyn, [0, -k*T], X0sm, 
+                                args = (T,mu), method='LSODA',
+                                rtol=3e-12, atol=1e-12)
 
-                # Stable (backward)
-                sol_sp = solve_ivp(fdyn, [0, -k*T], X0sp, 
-                                    args = (T,mu), method='LSODA', 
-                                    events=Poinc_hit, 
-                                    rtol=3e-12, atol=1e-12)
-                
-                sol_sm = solve_ivp(fdyn, [0, -k*T], X0sm, 
-                                    args = (T,mu), method='LSODA',
-                                    events=Poinc_hit, 
-                                    rtol=3e-12, atol=1e-12)
-                # Unstable (forward)
-                sol_up = solve_ivp(fdyn, [0, k*T], X0up,
-                                    args = (T,mu), method='LSODA',
-                                    events=Poinc_hit, 
-                                    rtol=3e-12, atol=1e-12)
-                sol_um = solve_ivp(fdyn, [0, k*T], X0um, 
-                                    args = (T,mu), method='LSODA',
-                                    events=Poinc_hit, 
-                                    rtol=3e-12, atol=1e-12)
-                
-            else:
-                # Stable (backward)
-                sol_sp = solve_ivp(fdyn, [0, -k*T], X0sp, 
-                                    args = (T,mu), method='LSODA', 
-                                    rtol=3e-12, atol=1e-12)
-                
-                sol_sm = solve_ivp(fdyn, [0, -k*T], X0sm, 
-                                    args = (T,mu), method='LSODA',
-                                    rtol=3e-12, atol=1e-12)
+            # Unstable (forward)
+            sol_up = solve_ivp(fdyn, [0, k*T], X0up,
+                                args = (T,mu), method='LSODA',
+                                rtol=3e-12, atol=1e-12)
+            sol_um = solve_ivp(fdyn, [0, k*T], X0um, 
+                                args = (T,mu), method='LSODA',
+                                rtol=3e-12, atol=1e-12)
 
-                # Unstable (forward)
-                sol_up = solve_ivp(fdyn, [0, k*T], X0up,
-                                    args = (T,mu), method='LSODA',
-                                    rtol=3e-12, atol=1e-12)
-                sol_um = solve_ivp(fdyn, [0, k*T], X0um, 
-                                    args = (T,mu), method='LSODA',
-                                    rtol=3e-12, atol=1e-12)
-    
             # Extract the solution
             Xsp = sol_sp.y[:4,:]
             Xsm = sol_sm.y[:4,:]
