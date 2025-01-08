@@ -39,12 +39,12 @@ function [dX] = fdyn(t, X, beta)
     dL(1) = l_t*vt/r^2 + l_vr*(vt^2/r^2 - 2/r^3 + 2*beta/r^3*cos(alpha)^3) - ...
             l_vt*(vr*vt/r^2 - 2*beta/r^3*cos(alpha)^2*sin(alpha));
     dL(2) = 0;
-    dL(3) = -l_r - l_vt*vt/r;
+    dL(3) = -l_r + l_vt*vt/r;
     dL(4) = -l_t/r - 2*l_vr*vt/r + l_vt*vr/r;
 
 
     
-    dX = [T*dS; dL];
+    dX = [dS; dL];
 
 
 end

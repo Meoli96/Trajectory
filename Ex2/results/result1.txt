@@ -1,0 +1,52 @@
+PSO results
+Initial guess: ig = [ 0.985897, 0.760791, 0.267802, 11.587636 ]
+Optimal costates: -0.819788
+Optimal costates: -0.079609
+Optimal costates: -0.873044
+Optimal costates: 9.249678
+Optimal cost: 0.028055
+--------------------
+ Iter  Func-count            Fval   Feasibility   Step Length       Norm of   First-order  
+                                                                       step    optimality
+    0           5    9.249678e+00     8.316e-03     1.000e+00     0.000e+00     1.000e+00  
+    1          13    9.280958e+00     5.427e-03     3.430e-01     3.139e-02     6.467e-01  
+    2          18    9.343943e+00     3.071e-03     1.000e+00     6.314e-02     1.161e+01  
+    3          23    9.348066e+00     5.690e-05     1.000e+00     4.162e-03     8.797e-01  
+    4          28    9.348250e+00     5.248e-08     1.000e+00     1.835e-04     3.231e+00  
+    5          69    9.348250e+00     5.248e-08     3.788e-06     4.226e-09     3.149e+00  
+    6         142    9.348250e+00     5.248e-08     4.922e-12     7.081e-14     9.886e-01  
+
+Local minimum possible. Constraints satisfied.
+
+fmincon stopped because the size of the current step is less than
+the value of the step size tolerance and constraints are 
+satisfied to within the value of the constraint tolerance.
+
+--------------------
+fmincon results
+Initial guess: ig = [ -0.819788, -0.079609, -0.873044, 9.249678 ]
+Optimal costates: -0.820850
+Optimal costates: -0.073196
+Optimal costates: -0.872466
+Optimal costates: 9.348250
+Optimal cost: 9.348250
+
+
+Xf =
+    0.3871   16.4050   -0.0000    1.6073
+
+>> dr = abs(Xf(1)-rf_adim)*D
+dr =
+    0.1579 km
+
+>> days = t(end)*T/(24*60*60)
+days =
+  543.4736
+
+>> dvt = abs(Xf(4) - vtf_adim)
+dvt =
+   5.2484e-08
+
+>> dvt = abs(Xf(4) - vtf_adim)*D/T
+dvt =
+   1.5631e-06 km/s
