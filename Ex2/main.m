@@ -1,6 +1,8 @@
+clc; clear all; close all;
+
 We = 1361; % W/m^2
 c = 3e8; % m/s
-sigma = 20; % kg/m^2
+sigma = 20; % g/m^2
 
 mu_s = 1.327e11; % km^3/s^2
 
@@ -46,10 +48,10 @@ vtf_adim= vM*T/D; %
 
 month_s = 24*60*60*30; % s  1 month in seconds
 % Guess transfer time
-tf_lb = month_s*12; % lower bound
-tf_ub = month_s*36; % upper bound
+tf_lb = month_s*18; % lower bound
+tf_ub = month_s*20; % upper bound
 
-tf_ig = 450*24*60*60; % initial guess
+tf_ig = 16*month_s; % initial guess
 
 % Adimensionalize bounds and initial guess
 tf_lb_adim = tf_lb/T;
@@ -70,25 +72,20 @@ odeOpts = odeset('RelTol', 3e-14, 'AbsTol', 1e-14);
 % Initial guess 
 lb = [-1, -1, -1, tf_lb_adim];
 ub = [1, 1, 1, tf_ub_adim];
-%ig = [0.390075, 0.051304, 0.026681, tf_ig_adim];
-%ig = [0.429354, -0.110873, -0.650314, 10.834078];
-%ig = [0.9354, -0.0873, 0.650314, 10.834078];
-ig = [0.985897,0.760791, 0.267802,tf_ig ]
 
-%ig = [0.385139,0.302993,0.114547, tf_ig_adim]; 
-%ig = [1e-3, -1e-3, 1e-1, tf_ig_adim];
-%% Use fmincon to solve for minimum time
 
 
 % PSO options
-pso_opts = optimoptions('particleswarm', 'Display', 'iter', 'SwarmSize', 100, 'MaxIterations', 100, 'FunctionTolerance', 1e-12, 'MaxStallIterations', 1e+3);
+pso_opts = optimoptions('particleswarm', 'Display', 'iter', 'SwarmSize', 50, 'MaxIterations', 100, 'FunctionTolerance', 1e-12, 'MaxStallIterations', 1e+3);
 
 % Run PSO
 [xxOpt, fval] = particleswarm(@cost, 4, lb, ub, pso_opts);
 fprintf("--------------------\n")
 fprintf("PSO results\n")
-fprintf("Initial guess: ig = [ %f, %f, %f, %f ]", ig(1), ig(2), ig(3), ig(4))
-fprintf("Optimal costates: %f\n", xxOpt)
+
+fprintf("Optimal costates: ig = [ %f, %f, %f, %f ]\n", xxOpt(1), xxOpt(2), xxOpt(3), xxOpt(4))
+
+fprintf("In days: %f\n", xxOpt(4)*T/(24*60*60))
 
 
 fprintf("Optimal cost: %f\n", fval)
@@ -130,6 +127,7 @@ for i = 1:length(t)
     S = X(i, 1:4);
     L = X(i, 5:8);
     alpha(i) = atan((-3*L(3) + sqrt(9*L(3)^2 +  8*L(4)^2))/(4*L(4)));
+
 end
 figure
 
@@ -144,7 +142,7 @@ title("Optimal control angle history - PSO")
 
 fprintf("--------------------\n")
 options_fmincon = optimoptions('fmincon', "Algorithm", "sqp", 'Display', 'iter', ...
-            'OptimalityTolerance',1e-16,'MaxIterations',1e+4,'StepTolerance',1e-14, ...
+            'OptimalityTolerance',1e-16,'MaxIterations',1e+4,'StepTolerance',1e-18, ...
             'MaxFunctionEvaluations',1e+4, 'TolCon', 1e-6);
 
 [xOpt] = fmincon(@J, xxOpt, [], [], [], [], lb, ub, @constr, options_fmincon);
@@ -155,9 +153,12 @@ options_fmincon = optimoptions('fmincon', "Algorithm", "sqp", 'Display', 'iter',
 
 fprintf("--------------------\n")
 fprintf("fmincon results\n")
-fprintf("Initial guess: ig = [ %f, %f, %f, %f ]", xxOpt(1), xxOpt(2), xxOpt(3), xxOpt(4))
-fprintf("Optimal costates: %f\n", xOpt)
+fprintf("Initial guess: ig = [ %f, %f, %f, %f ]\n", xxOpt(1), xxOpt(2), xxOpt(3), xxOpt(4))
+fprintf("Optimal costates: ig = [ %f, %f, %f, %f ]\n", xOpt(1), xOpt(2), xOpt(3), xOpt(4))
+
 fprintf("Optimal cost: %f\n", J(xOpt))
+fprintf("In days: %f\n", xOpt(4)*T/(24*60*60))
+
 
 
 % Extract optimal costates
@@ -199,13 +200,14 @@ for i = 1:length(t)
     S = X(i, 1:4);
     L = X(i, 5:8);
     alpha(i) = atan((-3*L(3) + sqrt(9*L(3)^2 +  8*L(4)^2))/(4*L(4)));
+    
+
 end
 figure
-
 plot(t, alpha*180/pi)
 xlabel("Time [s]")
 ylabel("Optimal control angle [deg]")
-title("Optimal control angle history - PSO")
+title("Optimal control angle history - fmincon")
 
 
 
@@ -272,7 +274,7 @@ function [ineq, eq] = constr(xx)
         Lf(4)*(-Sf(3)*Sf(4)/Sf(1) + beta_adim/Sf(1)^2*cos(alpha)^2*sin(alpha)) - 1;
     
     % Compute constraints
-    ineq = Hf;
+    ineq = -Hf;
     eq = [abs(Sf(1) - Yf(1)), abs(Sf(3) - Yf(2)), abs(Sf(4) - Yf(3))];
 
 
@@ -342,7 +344,7 @@ function [C] = cost(xx)
    
     
     % Compute cost
-    C = tf/(6*1e2) + (abs(Sf(1) - Yf(1)) + abs(Sf(3) - Yf(2)) + abs(Sf(4) - Yf(3)));	
+    C = tf/(16*1e3) + (abs(Sf(1) - Yf(1)) + abs(Sf(3) - Yf(2)) + abs(Sf(4) - Yf(3)));	
 end
 
 

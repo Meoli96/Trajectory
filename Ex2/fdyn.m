@@ -25,8 +25,10 @@ function [dX] = fdyn(t, X, beta)
     l_vt = L(4);
 
     % Optimal control angle
-    alpha = atan((-3*l_vr + sqrt(9*l_vr^2 +  8*l_vt^2))/(4*l_vt));
+    % Do not allow to let alpha jump from -pi/2 to pi/2 or viceversa
 
+    alpha = atan((-3*l_vr + sqrt(9*l_vr^2 +  8*l_vt^2))/(4*l_vt));
+    
     % Dynamics
     dS = zeros(4, 1);
     dL = zeros(4, 1);
